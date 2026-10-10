@@ -25,15 +25,24 @@ class AiTagsException implements Exception {
   String toString() => message;
 }
 
+/// A photo to send to the AI model.
+class AiPhoto {
+  final Uint8List bytes;
+  final String mimeType;
+
+  const AiPhoto(this.bytes, this.mimeType);
+}
+
 class AiTagsProvider {
   static final _logger = Logger('AiTags');
   static const kEndpoint = 'https://openrouter.ai/api/v1/chat/completions';
-  static const kTimeout = Duration(seconds: 90);
+  static const kTimeout = Duration(seconds: 120);
 
   static const kSystemPrompt = '''
-You are an OpenStreetMap mapping assistant. The user sends a photo of a place,
-sometimes with a hint about what should be mapped there.
-Return the OSM tags that best describe the object on the photo.
+You are an OpenStreetMap mapping assistant. The user sends one or more photos
+of the same place (for example, the signboard with the name and the opening
+hours), sometimes with a hint about what should be mapped there.
+Return the OSM tags that best describe the object on the photos.
 
 Rules:
 - Reply with a single JSON object only, without markdown fences or explanations.
@@ -41,10 +50,11 @@ Rules:
 - Use standard OSM keys and values: amenity=*, shop=*, tourism=*, leisure=*,
   craft=*, office=*, healthcare=*, man_made=*, building=*.
 - Prefer the most specific main tag over a generic one.
-- Add the "name" tag only if the name is clearly readable in the photo.
+- Combine the information from all the photos into a single tag set.
+- Add the "name" tag only if the name is clearly readable in one of the photos.
 - Add other tags (opening_hours, cuisine, brand, ...) only if you are sure about them.
 - Do not invent details that are not visible. When in doubt, omit the tag.
-- If the user hint is present, it has priority when the photo is ambiguous.
+- If the user hint is present, it has priority when the photos are ambiguous.
 - If you cannot identify any object, return {}.
 ''';
 
@@ -52,20 +62,22 @@ Rules:
 
   AiTagsProvider(this._ref);
 
-  /// Sends the photo (and an optional user hint) to the AI model
+  /// Sends the photos (and an optional user hint) to the AI model
   /// and returns the OSM tags it suggested for the object.
   Future<Map<String, String>> recognizeTags({
-    required Uint8List image,
-    required String mimeType,
+    required List<AiPhoto> photos,
     String? explanation,
   }) async {
     final settings = _ref.read(aiSettingsProvider);
     if (!settings.isConfigured) {
       throw AiTagsException('OpenRouter API key or model is not set');
     }
+    if (photos.isEmpty) {
+      throw AiTagsException('No photos to recognize');
+    }
 
     final message = StringBuffer(
-        'Suggest OpenStreetMap tags for the object on this photo.');
+        'Suggest OpenStreetMap tags for the object in the attached photos.');
     final hint = explanation?.trim() ?? '';
     if (hint.isNotEmpty) {
       message.write('\nHint from the user: $hint');
@@ -79,12 +91,14 @@ Rules:
           'role': 'user',
           'content': [
             {'type': 'text', 'text': message.toString()},
-            {
-              'type': 'image_url',
-              'image_url': {
-                'url': 'data:$mimeType;base64,${base64Encode(image)}',
+            for (final photo in photos)
+              {
+                'type': 'image_url',
+                'image_url': {
+                  'url':
+                      'data:${photo.mimeType};base64,${base64Encode(photo.bytes)}',
+                },
               },
-            },
           ],
         },
       ],

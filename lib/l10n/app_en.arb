@@ -1452,6 +1452,14 @@
   "@photoMapPickPhoto": {
     "description": "Option to pick an existing photo for AI tag recognition."
   },
+  "photoMapAddPhoto": "Add photo",
+  "@photoMapAddPhoto": {
+    "description": "Button that adds one more photo for the AI recognition."
+  },
+  "photoMapRemovePhoto": "Remove photo",
+  "@photoMapRemovePhoto": {
+    "description": "Tooltip for the button that removes a photo from the list."
+  },
   "photoMapTitle": "Photo mapping",
   "@photoMapTitle": {
     "description": "Title of the screen where an AI model recognizes OSM tags from a photo."

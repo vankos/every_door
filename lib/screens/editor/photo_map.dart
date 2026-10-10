@@ -1,27 +1,82 @@
 // Copyright 2022-2025 Ilya Zverev
 // This file is a part of Every Door, distributed under GPL v3 or later version.
 // Refer to LICENSE file and https://www.gnu.org/licenses/gpl-3.0.html for details.
-import 'dart:typed_data';
-
 import 'package:every_door/constants.dart';
 import 'package:every_door/helpers/tags/main_key.dart';
 import 'package:every_door/models/preset.dart';
 import 'package:every_door/providers/ai_tags.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:every_door/generated/l10n/app_localizations.dart'
     show AppLocalizations;
 
-/// A page for mapping an object from a photo: the photo (with an optional
-/// comment) is sent to an AI model, and the tags it returns are used
+/// Asks where to take a photo from and picks it.
+/// Returns null when the user cancelled or the photo could not be taken.
+Future<AiPhoto?> pickPhoto(BuildContext context) async {
+  final loc = AppLocalizations.of(context)!;
+  final source = await showModalBottomSheet<ImageSource>(
+    context: context,
+    builder: (context) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: Icon(Icons.photo_camera),
+            title: Text(loc.photoMapTakePhoto),
+            onTap: () => Navigator.pop(context, ImageSource.camera),
+          ),
+          ListTile(
+            leading: Icon(Icons.photo_library),
+            title: Text(loc.photoMapPickPhoto),
+            onTap: () => Navigator.pop(context, ImageSource.gallery),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (source == null) return null;
+
+  XFile? file;
+  try {
+    file = await ImagePicker().pickImage(
+      source: source,
+      maxWidth: 2000.0,
+      imageQuality: 85,
+    );
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.photoMapPhotoFailed(e.toString()))),
+      );
+    }
+    return null;
+  }
+  if (file == null) return null;
+
+  final bytes = await file.readAsBytes();
+  return AiPhoto(bytes, imageMimeType(file));
+}
+
+/// Guesses the mime type of a picked photo.
+String imageMimeType(XFile file) {
+  final mime = file.mimeType;
+  if (mime != null && mime.isNotEmpty) return mime;
+  final name = file.name.toLowerCase();
+  if (name.endsWith('.png')) return 'image/png';
+  if (name.endsWith('.webp')) return 'image/webp';
+  if (name.endsWith('.heic') || name.endsWith('.heif')) return 'image/heic';
+  return 'image/jpeg';
+}
+
+/// A page for mapping an object from photos: the photos (with an optional
+/// comment) are sent to an AI model, and the tags it returns are used
 /// to create a new point. Returns a [Preset] with those tags on success.
 class PhotoMapPage extends ConsumerStatefulWidget {
-  final Uint8List image;
-  final String mimeType;
+  final List<AiPhoto> photos;
 
   const PhotoMapPage({
-    required this.image,
-    required this.mimeType,
+    required this.photos,
   });
 
   @override
@@ -29,6 +84,7 @@ class PhotoMapPage extends ConsumerStatefulWidget {
 }
 
 class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
+  late final List<AiPhoto> photos = List.of(widget.photos);
   final controller = TextEditingController();
   bool loading = false;
   String? error;
@@ -37,6 +93,31 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
   void dispose() {
     controller.dispose();
     super.dispose();
+  }
+
+  Future<void> addPhoto() async {
+    final photo = await pickPhoto(context);
+    if (photo == null || !mounted) return;
+    setState(() {
+      photos.add(photo);
+    });
+  }
+
+  void removePhoto(int index) {
+    setState(() {
+      photos.removeAt(index);
+    });
+  }
+
+  void showPhoto(AiPhoto photo) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        child: InteractiveViewer(
+          child: Image.memory(photo.bytes),
+        ),
+      ),
+    );
   }
 
   Future<void> recognizeTags() async {
@@ -48,8 +129,7 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
 
     try {
       final tags = await ref.read(aiTagsProvider).recognizeTags(
-            image: widget.image,
-            mimeType: widget.mimeType,
+            photos: photos,
             explanation: controller.text,
           );
       // The preset type is NSI so that the editor detects the actual preset
@@ -90,6 +170,77 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
         .join(' ');
   }
 
+  Widget _buildPhoto(AiPhoto photo, int index, AppLocalizations loc) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Stack(
+        children: [
+          GestureDetector(
+            onTap: () => showPhoto(photo),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.memory(
+                photo.bytes,
+                width: 110.0,
+                height: 110.0,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          if (photos.length > 1)
+            Positioned(
+              top: 2.0,
+              right: 2.0,
+              child: Tooltip(
+                message: loc.photoMapRemovePhoto,
+                child: GestureDetector(
+                  onTap: () => removePhoto(index),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(4.0),
+                    child: const Icon(Icons.close, size: 16.0, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddPhoto(AppLocalizations loc) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: InkWell(
+        onTap: addPhoto,
+        borderRadius: BorderRadius.circular(8.0),
+        child: Container(
+          width: 110.0,
+          height: 110.0,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(color: Colors.grey),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_a_photo, color: Colors.grey.shade700),
+              const SizedBox(height: 4.0),
+              Text(
+                loc.photoMapAddPhoto,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12.0, color: Colors.grey.shade700),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -98,17 +249,16 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(
-              child: Padding(
+            SizedBox(
+              height: 130.0,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.all(10.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: Image.memory(
-                    widget.image,
-                    width: double.infinity,
-                    fit: BoxFit.contain,
-                  ),
-                ),
+                children: [
+                  for (int i = 0; i < photos.length; i++)
+                    _buildPhoto(photos[i], i, loc),
+                  if (!loading) _buildAddPhoto(loc),
+                ],
               ),
             ),
             Padding(

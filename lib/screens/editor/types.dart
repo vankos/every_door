@@ -1,8 +1,6 @@
 // Copyright 2022-2025 Ilya Zverev
 // This file is a part of Every Door, distributed under GPL v3 or later version.
 // Refer to LICENSE file and https://www.gnu.org/licenses/gpl-3.0.html for details.
-import 'dart:typed_data';
-
 import 'package:eval_annotation/eval_annotation.dart';
 import 'package:every_door/constants.dart';
 import 'package:every_door/helpers/counter.dart';
@@ -17,7 +15,6 @@ import 'package:every_door/screens/editor.dart';
 import 'package:every_door/screens/editor/photo_map.dart';
 import 'package:every_door/screens/settings/ai.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:every_door/models/preset.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -218,55 +215,14 @@ class _TypeChooserPageState extends ConsumerState<TypeChooserPage> {
       return;
     }
 
-    // Ask what to do: take a photo or pick an existing one.
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.photo_camera),
-              title: Text(loc.photoMapTakePhoto),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-            ListTile(
-              leading: Icon(Icons.photo_library),
-              title: Text(loc.photoMapPickPhoto),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
+    // Ask where to take the first photo from.
+    final photo = await pickPhoto(context);
+    if (photo == null || !mounted) return;
 
-    XFile? file;
-    try {
-      file = await ImagePicker().pickImage(
-        source: source,
-        maxWidth: 2000.0,
-        imageQuality: 85,
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.photoMapPhotoFailed(e.toString()))),
-        );
-      }
-      return;
-    }
-    if (file == null || !mounted) return;
-
-    final Uint8List bytes = await file.readAsBytes();
-    if (!mounted) return;
     final preset = await Navigator.push<Preset>(
       context,
       MaterialPageRoute(
-        builder: (context) => PhotoMapPage(
-          image: bytes,
-          mimeType: _imageMimeType(file!),
-        ),
+        builder: (context) => PhotoMapPage(photos: [photo]),
       ),
     );
     if (preset == null || !mounted) return;
@@ -285,16 +241,6 @@ class _TypeChooserPageState extends ConsumerState<TypeChooserPage> {
       // Editing preset, return the new one.
       Navigator.pop(context, preset);
     }
-  }
-
-  String _imageMimeType(XFile file) {
-    final mime = file.mimeType;
-    if (mime != null && mime.isNotEmpty) return mime;
-    final name = file.name.toLowerCase();
-    if (name.endsWith('.png')) return 'image/png';
-    if (name.endsWith('.webp')) return 'image/webp';
-    if (name.endsWith('.heic') || name.endsWith('.heif')) return 'image/heic';
-    return 'image/jpeg';
   }
 
   @override

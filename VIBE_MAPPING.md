@@ -8,13 +8,17 @@ mapping: take a photo of a place, and an AI model suggests OSM tags for it.
 1. Tap the "+" button to add a point: the type chooser screen opens.
 2. Tap the camera icon in the top right corner of the type chooser.
 3. Choose "Take a photo" or "Open an existing photo".
-4. On the next screen you can optionally describe what to map on the photo
-   (for example, "this is a pharmacy").
-5. Tap "Recognize tags": the photo and the comment are sent to the
+4. On the next screen you can add more photos with the "+" tile: for
+   example, one photo of the signboard with the name and another one with
+   the opening hours. Tap a photo to view it full screen; remove it with
+   the cross in its corner.
+5. Optionally describe what to map on the photos (for example,
+   "this is a pharmacy").
+6. Tap "Recognize tags": all photos and the comment are sent to the
    [OpenRouter](https://openrouter.ai/) API, and the vision model replies
    with OSM tags. The tags are put into a new point and the usual editor
    opens, with the field list detected from those tags.
-6. Check and fix the tags as usual, then save the point.
+7. Check and fix the tags as usual, then save the point.
 
 ## Configuration
 
