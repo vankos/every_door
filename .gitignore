@@ -65,3 +65,9 @@ lib/commit_info.g.dart
 /plugins/
 /.dart_eval/
 /tools/svg/
+
+# Personal signing key for release builds (do not commit)
+android/key.properties
+keystore/
+*.jks
+*.keystore

@@ -1,10 +1,24 @@
-name: Build Android apk
+name: Build Android APK
 
 on:
-  [workflow_dispatch]
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Android flavor'
+        type: choice
+        options:
+          - prod
+          - beta
+        default: prod
+  push:
+    tags:
+      - 'v*'
 
 permissions:
-  contents: read
+  contents: write
+
+env:
+  FLAVOR: ${{ inputs.flavor || 'prod' }}
 
 jobs:
   build-and-test:
@@ -18,28 +32,43 @@ jobs:
       with:
         java-version: '17'
         distribution: 'adopt'
-    - run: echo '{}' > lib/l10n/app_zh.arb
-    - run: rm -f lib/l10n/app_nap.arb
+    - name: Prepare localization stubs
+      run: |
+        echo '{}' > lib/l10n/app_zh.arb
+        rm -f lib/l10n/app_nap.arb
     - run: vendor/flutter/bin/flutter pub get
-    - run: curl -L https://textual.ru/presets.db -o assets/presets.db
-      name: Download presets database
+    - name: Download presets database
+      run: curl -L https://textual.ru/presets.db -o assets/presets.db
     - run: vendor/flutter/bin/dart run build_runner build
     - run: vendor/flutter/bin/flutter test
-    - run: vendor/flutter/bin/flutter build apk --flavor beta
-    - uses: noriban/sign-android-release@v5
-      name: Sign app APK
-      id: sign_app
-      with:
-        releaseDirectory: build/app/outputs/flutter-apk
-        signingKeyBase64: ${{ secrets.KEYSTORE_JKS }}
-        alias: github
-        keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-        keyPassword: ${{ secrets.KEYSTORE_PASSWORD }}
+    - name: Set up the signing key
+      env:
+        KEYSTORE_JKS: ${{ secrets.KEYSTORE_JKS }}
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      run: |
+        echo "$KEYSTORE_JKS" | base64 -d > "$RUNNER_TEMP/everydoor.jks"
+        echo "storePassword=$KEYSTORE_PASSWORD" > android/key.properties
+        echo "keyPassword=$KEYSTORE_PASSWORD" >> android/key.properties
+        echo "keyAlias=everydoor" >> android/key.properties
+        echo "storeFile=$RUNNER_TEMP/everydoor.jks" >> android/key.properties
+    - name: Build APK
+      run: vendor/flutter/bin/flutter build apk --release --flavor $FLAVOR
     - name: Rename APK
-      run: mv ${{steps.sign_app.outputs.signedReleaseFile}} build/app/outputs/flutter-apk/EveryDoor-$(git log -n 1 --format='%h').apk
+      run: |
+        NAME="EveryDoor-$FLAVOR-$(git log -n 1 --format='%h')"
+        mv "build/app/outputs/flutter-apk/app-$FLAVOR-release.apk" "build/app/outputs/flutter-apk/$NAME.apk"
+        echo "APK_NAME=$NAME.apk" >> "$GITHUB_ENV"
     - name: Archive APK
       uses: actions/upload-artifact@v4
       with:
-        name: everydoor-apk
+        name: everydoor-apk-${{ env.FLAVOR }}
         path: build/app/outputs/flutter-apk/EveryDoor*.apk
         retention-days: 60
+    - name: Publish GitHub release
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create "$GITHUB_REF_NAME" "build/app/outputs/flutter-apk/$APK_NAME" \
+          --title "$GITHUB_REF_NAME" --generate-notes \
+          || gh release upload "$GITHUB_REF_NAME" "build/app/outputs/flutter-apk/$APK_NAME" --clobber
