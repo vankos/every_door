@@ -1424,7 +1424,15 @@
   "@aiModelLabel": {
     "description": "Label for the OpenRouter model name field."
   },
-  "aiModelHint": "e.g. google/gemini-2.5-flash",
+  "aiModelChoose": "Choose a model",
+  "@aiModelChoose": {
+    "description": "Hint of the model dropdown shown when a custom model is set."
+  },
+  "aiModelCustomLabel": "Or enter a model id",
+  "@aiModelCustomLabel": {
+    "description": "Label of the text field for entering a custom OpenRouter model id."
+  },
+  "aiModelHint": "e.g. google/gemini-3.7-flash",
   "@aiModelHint": {
     "description": "Hint for the OpenRouter model name field."
   },

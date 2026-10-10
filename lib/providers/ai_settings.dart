@@ -10,11 +10,28 @@ import 'package:logging/logging.dart';
 final aiSettingsProvider =
     NotifierProvider<AiSettingsProvider, AiSettings>(AiSettingsProvider.new);
 
+/// A vision model suggested for photo mapping: an OpenRouter model id
+/// and a short name to show in the settings.
+class AiModelOption {
+  final String id;
+  final String name;
+
+  const AiModelOption(this.id, this.name);
+}
+
+/// Models with image input suggested on the AI settings page.
+const kAiModels = <AiModelOption>[
+  AiModelOption('google/gemini-3.7-flash', 'Gemini 3.7 Flash'),
+  AiModelOption('openai/gpt-6-luna', 'GPT-6 Luna'),
+  AiModelOption('qwen/qwen3.8-flash', 'Qwen3.8 Flash'),
+  AiModelOption('~deepseek/deepseek-flash-latest', 'DeepSeek Flash Latest'),
+];
+
 /// Settings for the photo-to-tags mapping: the OpenRouter API key
 /// and the name of a vision model.
 class AiSettings {
   /// A vision model that is available on OpenRouter by default.
-  static const kDefaultModel = 'google/gemini-2.5-flash';
+  static const kDefaultModel = 'google/gemini-3.7-flash';
 
   final String apiKey;
   final String model;

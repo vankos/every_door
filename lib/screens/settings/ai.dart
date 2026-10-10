@@ -38,6 +38,7 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final model = ref.watch(aiSettingsProvider).model;
     // The API key is loaded from the secure storage asynchronously,
     // fill the field when it arrives.
     ref.listen(aiSettingsProvider, (previous, next) {
@@ -77,13 +78,50 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0),
+            child: DropdownButtonFormField<String>(
+              initialValue:
+                  kAiModels.any((option) => option.id == model) ? model : null,
+              isExpanded: true,
+              itemHeight: 64.0,
+              decoration: InputDecoration(
+                label: Text(loc.aiModelLabel),
+                prefixIcon: Icon(Icons.smart_toy),
+              ),
+              hint: Text(loc.aiModelChoose),
+              items: [
+                for (final option in kAiModels)
+                  DropdownMenuItem(
+                    value: option.id,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(option.name),
+                        Text(
+                          option.id,
+                          style: TextStyle(
+                              fontSize: 12.0, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                _modelController.text = value;
+                ref.read(aiSettingsProvider.notifier).saveModel(value);
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0),
             child: TextFormField(
               controller: _modelController,
               style: kFieldTextStyle,
               decoration: InputDecoration(
-                label: Text(loc.aiModelLabel),
+                label: Text(loc.aiModelCustomLabel),
                 hintText: loc.aiModelHint,
-                prefixIcon: Icon(Icons.smart_toy),
+                prefixIcon: Icon(Icons.edit),
               ),
               onChanged: (value) {
                 ref.read(aiSettingsProvider.notifier).saveModel(value);
