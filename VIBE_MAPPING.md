@@ -48,8 +48,11 @@ APKs are built on GitHub Actions (`.github/workflows/build-apk.yml`):
 * **Manually**: Actions → "Build Android APK" → Run workflow,
   choose the flavor (`prod` by default). The APK is attached to the run
   as an artifact (kept for 60 days).
-* **By tag**: push a tag like `v1.0` — the workflow builds the APK and
-  publishes a GitHub release with the APK attached.
+* **By tag**: push a tag like `vibe-1.0` — the workflow builds the APK and
+  publishes a GitHub release with the APK attached. The release title is
+  "Every Door: Vibe mapping <tag without the vibe- prefix>". If a
+  `RELEASE_NOTES.md` file exists in the repository root, it is used as the
+  release description; otherwise GitHub generates the notes.
 
 The APK is signed with a personal key (keystore secrets
 `KEYSTORE_JKS` and `KEYSTORE_PASSWORD` in the repository). The same key
