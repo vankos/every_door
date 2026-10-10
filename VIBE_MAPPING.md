@@ -37,6 +37,29 @@ Open "Settings" → "Photo mapping" → "OpenRouter API":
 
 Without an API key the camera button suggests opening the settings.
 
+## Releases
+
+APKs are built on GitHub Actions (`.github/workflows/build-apk.yml`):
+
+* **Manually**: Actions → "Build Android APK" → Run workflow,
+  choose the flavor (`prod` by default). The APK is attached to the run
+  as an artifact (kept for 60 days).
+* **By tag**: push a tag like `v1.0` — the workflow builds the APK and
+  publishes a GitHub release with the APK attached.
+
+The APK is signed with a personal key (keystore secrets
+`KEYSTORE_JKS` and `KEYSTORE_PASSWORD` in the repository). The same key
+is used for local builds when `android/key.properties` and
+`keystore/everydoor.jks` are present (both are gitignored).
+
+Keep a backup of the keystore and its password: without them you cannot
+update an installed app, only reinstall it (losing app data).
+
+Note: the `prod` flavor has the same package id as the official Every
+Door, but a different signature, so an installed official app has to be
+removed first. The `beta` flavor (`info.zverev.ilya.every_door.beta`)
+installs alongside it.
+
 ## Privacy
 
 Photos and the comment are sent to OpenRouter and the model provider.
