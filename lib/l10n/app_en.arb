@@ -1403,5 +1403,91 @@
   "faqTagging": "All tagging questions",
   "@faqTagging": {},
   "faqTaggingContent": "Why is an object missing in the editor? When are these white dots displayed in the micromapping mode? How are objects sorted?\n\nAnswers to all these questions are in [element_kind_std.dart](https://github.com/Zverik/every_door/blob/main/lib/helpers/tags/element_kind_std.dart). Here's what you can look at:\n\n* The key order for the main tag — list `kMainKeys` in `main_key.dart`.\n* Which objects are downloaded — class `_EverythingKind`.\n* What is considered an amenity — class `_AmenityKind`.\n* Which points are snapped to what ways — class `ElementKindImpl` logic (see relevant subclasses).\n* When a micromapping object is incomplete — class `_NeedsMoreInfo`.",
-  "@faqTaggingContent": {}
+  "@faqTaggingContent": {},
+  "settingsAi": "Photo mapping",
+  "@settingsAi": {
+    "description": "Title of the settings section and page for mapping objects from photos with an AI model."
+  },
+  "settingsAiOpenRouter": "OpenRouter API",
+  "@settingsAiOpenRouter": {
+    "description": "Settings entry for the OpenRouter API key and model used for photo mapping."
+  },
+  "aiApiKeyLabel": "API key",
+  "@aiApiKeyLabel": {
+    "description": "Label for the OpenRouter API key field."
+  },
+  "aiApiKeyHint": "sk-or-v1-...",
+  "@aiApiKeyHint": {
+    "description": "Hint for the OpenRouter API key field."
+  },
+  "aiModelLabel": "Image recognition model",
+  "@aiModelLabel": {
+    "description": "Label for the OpenRouter model name field."
+  },
+  "aiModelHint": "e.g. google/gemini-2.5-flash",
+  "@aiModelHint": {
+    "description": "Hint for the OpenRouter model name field."
+  },
+  "aiPrivacyNote": "Photos and your comment are sent to OpenRouter for recognition. Suggested tags may be wrong: check them before uploading.",
+  "@aiPrivacyNote": {
+    "description": "Privacy note on the AI settings page."
+  },
+  "photoMapTooltip": "Map from a photo",
+  "@photoMapTooltip": {
+    "description": "Tooltip for the camera button on the type choosing screen."
+  },
+  "photoMapTakePhoto": "Take a photo",
+  "@photoMapTakePhoto": {
+    "description": "Option to take a new photo for AI tag recognition."
+  },
+  "photoMapPickPhoto": "Open an existing photo",
+  "@photoMapPickPhoto": {
+    "description": "Option to pick an existing photo for AI tag recognition."
+  },
+  "photoMapTitle": "Photo mapping",
+  "@photoMapTitle": {
+    "description": "Title of the screen where an AI model recognizes OSM tags from a photo."
+  },
+  "photoMapDescriptionLabel": "What to map on the photo?",
+  "@photoMapDescriptionLabel": {
+    "description": "Label of the optional text field with hints for the AI model."
+  },
+  "photoMapDescriptionHint": "Optional: e.g. \"this is a pharmacy\"",
+  "@photoMapDescriptionHint": {
+    "description": "Hint for the optional text field with hints for the AI model."
+  },
+  "photoMapSubmit": "Recognize tags",
+  "@photoMapSubmit": {
+    "description": "Button that sends the photo to the AI model."
+  },
+  "photoMapRecognizing": "Recognizing…",
+  "@photoMapRecognizing": {
+    "description": "Label shown while the AI model is recognizing tags."
+  },
+  "photoMapNoKey": "Set the OpenRouter API key and model in settings to map objects from photos.",
+  "@photoMapNoKey": {
+    "description": "Message shown when the photo mapping is not configured yet."
+  },
+  "photoMapError": "Failed to recognize tags: {error}",
+  "@photoMapError": {
+    "description": "Error message when the AI model call failed.",
+    "placeholders": {
+      "error": {
+        "description": "Error message from the AI model or the network."
+      }
+    }
+  },
+  "photoMapNoTags": "Could not recognize any tags. Try another photo or add a comment.",
+  "@photoMapNoTags": {
+    "description": "Message shown when the AI model returned no tags."
+  },
+  "photoMapPhotoFailed": "Could not get the photo: {error}",
+  "@photoMapPhotoFailed": {
+    "description": "Error message when the photo could not be taken or picked.",
+    "placeholders": {
+      "error": {
+        "description": "Error message from the image picker."
+      }
+    }
+  }
 }

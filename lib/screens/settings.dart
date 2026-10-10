@@ -2,6 +2,7 @@
 // This file is a part of Every Door, distributed under GPL v3 or later version.
 // Refer to LICENSE file and https://www.gnu.org/licenses/gpl-3.0.html for details.
 import 'package:every_door/constants.dart';
+import 'package:every_door/providers/ai_settings.dart';
 import 'package:every_door/providers/changes.dart';
 import 'package:every_door/providers/changeset_tags.dart';
 import 'package:every_door/providers/editor_settings.dart';
@@ -11,6 +12,7 @@ import 'package:every_door/providers/auth.dart';
 import 'package:every_door/screens/settings/about.dart';
 import 'package:every_door/screens/settings/account.dart';
 import 'package:every_door/screens/settings/account_list.dart';
+import 'package:every_door/screens/settings/ai.dart';
 import 'package:every_door/screens/settings/caches.dart';
 import 'package:every_door/screens/settings/changes.dart';
 import 'package:every_door/screens/settings/changeset_pane.dart';
@@ -31,6 +33,7 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final login = ref.watch(authProvider)['osm']!.value?.displayName;
     final editorSettings = ref.watch(editorSettingsProvider);
+    final aiSettings = ref.watch(aiSettingsProvider);
     final forceLocation = ref.watch(forceLocationProvider);
     final hashtags = ref.watch(changesetTagsProvider.notifier).getHashtags();
     final loc = AppLocalizations.of(context)!;
@@ -174,6 +177,22 @@ class SettingsPage extends ConsumerWidget {
                     },
                     initialValue: editorSettings.preferContact,
                   ),
+              ],
+            ),
+            SettingsSection(
+              title: Text(loc.settingsAi),
+              tiles: [
+                SettingsTile(
+                  title: Text(loc.settingsAiOpenRouter),
+                  description: Text(aiSettings.model),
+                  trailing: Icon(Icons.navigate_next),
+                  onPressed: (context) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AiSettingsPage()),
+                    );
+                  },
+                ),
               ],
             ),
             if (defaultTargetPlatform == TargetPlatform.android)
