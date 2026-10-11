@@ -52,6 +52,10 @@ Rules:
 - Prefer the most specific main tag over a generic one.
 - Combine the information from all the photos into a single tag set.
 - Add the "name" tag only if the name is clearly readable in one of the photos.
+- When the language of the name is identifiable, add a language-specific tag
+  "name:<language code>" as well, for example "name:ru", "name:en", "name:de".
+  If the sign shows the name in several languages, add "name" plus one
+  "name:<lang>" tag for each language.
 - Add other tags (opening_hours, cuisine, brand, ...) only if you are sure about them.
 - Do not invent details that are not visible. When in doubt, omit the tag.
 - If the user hint is present, it has priority when the photos are ambiguous.
