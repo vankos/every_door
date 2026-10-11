@@ -1448,9 +1448,9 @@
   "@photoMapTakePhoto": {
     "description": "Option to take a new photo for AI tag recognition."
   },
-  "photoMapPickPhoto": "Open an existing photo",
+  "photoMapPickPhoto": "Open existing photos",
   "@photoMapPickPhoto": {
-    "description": "Option to pick an existing photo for AI tag recognition."
+    "description": "Option to pick existing photos for AI tag recognition."
   },
   "photoMapAddPhoto": "Add photo",
   "@photoMapAddPhoto": {

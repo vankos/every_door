@@ -11,9 +11,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:every_door/generated/l10n/app_localizations.dart'
     show AppLocalizations;
 
-/// Asks where to take a photo from and picks it.
-/// Returns null when the user cancelled or the photo could not be taken.
-Future<AiPhoto?> pickPhoto(BuildContext context) async {
+/// Asks where to take photos from and picks one or more of them.
+/// Returns an empty list when the user cancelled or the photos could not
+/// be taken or picked.
+Future<List<AiPhoto>> pickPhotos(BuildContext context) async {
   final loc = AppLocalizations.of(context)!;
   final source = await showModalBottomSheet<ImageSource>(
     context: context,
@@ -35,27 +36,40 @@ Future<AiPhoto?> pickPhoto(BuildContext context) async {
       ),
     ),
   );
-  if (source == null) return null;
+  if (source == null) return const [];
 
-  XFile? file;
+  final picker = ImagePicker();
+  List<XFile> files;
   try {
-    file = await ImagePicker().pickImage(
-      source: source,
-      maxWidth: 2000.0,
-      imageQuality: 85,
-    );
+    if (source == ImageSource.camera) {
+      final file = await picker.pickImage(
+        source: source,
+        maxWidth: 2000.0,
+        imageQuality: 85,
+      );
+      files = file == null ? const <XFile>[] : [file];
+    } else {
+      // The system picker allows selecting several photos at once.
+      files = await picker.pickMultiImage(
+        maxWidth: 2000.0,
+        imageQuality: 85,
+      );
+    }
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.photoMapPhotoFailed(e.toString()))),
       );
     }
-    return null;
+    return const [];
   }
-  if (file == null) return null;
 
-  final bytes = await file.readAsBytes();
-  return AiPhoto(bytes, imageMimeType(file));
+  final photos = <AiPhoto>[];
+  for (final file in files) {
+    final bytes = await file.readAsBytes();
+    photos.add(AiPhoto(bytes, imageMimeType(file)));
+  }
+  return photos;
 }
 
 /// Guesses the mime type of a picked photo.
@@ -96,10 +110,10 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
   }
 
   Future<void> addPhoto() async {
-    final photo = await pickPhoto(context);
-    if (photo == null || !mounted) return;
+    final picked = await pickPhotos(context);
+    if (picked.isEmpty || !mounted) return;
     setState(() {
-      photos.add(photo);
+      photos.addAll(picked);
     });
   }
 

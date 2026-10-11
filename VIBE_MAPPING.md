@@ -7,7 +7,8 @@ mapping: take a photo of a place, and an AI model suggests OSM tags for it.
 
 1. Tap the "+" button to add a point: the type chooser screen opens.
 2. Tap the camera icon in the top right corner of the type chooser.
-3. Choose "Take a photo" or "Open an existing photo".
+3. Choose "Take a photo" or "Open existing photos": the system picker
+   allows selecting several photos at once.
 4. On the next screen you can add more photos with the "+" tile: for
    example, one photo of the signboard with the name and another one with
    the opening hours. Tap a photo to view it full screen; remove it with
@@ -78,8 +79,10 @@ uploading to OpenStreetMap.
 * `lib/providers/ai_settings.dart` — OpenRouter settings (key + model list).
 * `lib/providers/ai_tags.dart` — the OpenRouter chat completions client
   (base64 image + text) and the JSON-to-tags parser.
-* `lib/screens/editor/photo_map.dart` — photo preview, comment field and
-  the "Recognize tags" button. Returns a `Preset` with the AI tags.
+* `lib/screens/editor/photo_map.dart` — the system picker (`pickPhotos`:
+  one photo from the camera, several from the gallery), the photo preview,
+  the comment field and the "Recognize tags" button. Returns a `Preset`
+  with the AI tags.
 * `lib/screens/editor/types.dart` — the camera button on the type chooser.
 * `lib/screens/settings/ai.dart` — the settings page.
 * `test/ai_tags_test.dart` — unit tests for the tags parser.
@@ -99,11 +102,17 @@ This project needs a few extra steps when building locally:
 * The Android app has `prod` and `beta` flavors, so the build command is
   `flutter build apk --flavor prod` (without the flavor Flutter complains
   it cannot find the apk).
-* `dart run build_runner build` needs a Flutter SDK path without spaces
-  (the `objective_c` native assets hook fails otherwise). If the SDK is in
+* Commands that build the `objective_c` native assets hook
+  (`dart run build_runner build`, `flutter test`) need a Flutter SDK path
+  without spaces (otherwise the hook fails to compile). If the SDK is in
   a path with spaces, create a junction and run Flutter through it:
 
   ```powershell
   New-Item -ItemType Junction -Path "C:\flutter" -Target "<path-to-flutter-sdk>"
   C:\flutter\bin\flutter.bat build apk --flavor prod
   ```
+
+  After a failed hook build, delete the `.dart_tool/hooks_runner`
+  directory: the bad result is cached there, and every next command keeps
+  failing with "Could not find a command named ...hook.dill" until it is
+  removed.

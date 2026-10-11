@@ -215,14 +215,14 @@ class _TypeChooserPageState extends ConsumerState<TypeChooserPage> {
       return;
     }
 
-    // Ask where to take the first photo from.
-    final photo = await pickPhoto(context);
-    if (photo == null || !mounted) return;
+    // Ask where to take the first photos from.
+    final photos = await pickPhotos(context);
+    if (photos.isEmpty || !mounted) return;
 
     final preset = await Navigator.push<Preset>(
       context,
       MaterialPageRoute(
-        builder: (context) => PhotoMapPage(photos: [photo]),
+        builder: (context) => PhotoMapPage(photos: photos),
       ),
     );
     if (preset == null || !mounted) return;
