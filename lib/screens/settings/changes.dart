@@ -155,7 +155,7 @@ class _ChangeListPageState extends ConsumerState {
     final nProvider = ref.read(notesProvider.notifier);
     if (change.change != null) {
       chProvider.deleteChange(change.change!);
-      ref.read(needMapUpdateProvider).trigger();
+      ref.read(needMapUpdateProvider.notifier).trigger();
     } else if (change.note != null) {
       nProvider.clearChanges(note: change.note!);
     } else if (change.allMapNotes) {
@@ -224,7 +224,7 @@ class _ChangeListPageState extends ConsumerState {
                         ref
                             .read(changesProvider.notifier)
                             .clearChanges(includeErrored: true);
-                        ref.read(needMapUpdateProvider).trigger();
+                        ref.read(needMapUpdateProvider.notifier).trigger();
                       }
                     },
                     icon: Icon(Icons.delete_forever),

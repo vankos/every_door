@@ -38,7 +38,7 @@ class UploaderProvider {
       int dataCount = await _ref.read(osmApiProvider).uploadChanges(true);
       int noteCount = await _ref.read(notesProvider.notifier).uploadNotes();
       await uploadPluginData();
-      _ref.read(needMapUpdateProvider).trigger();
+      _ref.read(needMapUpdateProvider.notifier).trigger();
       // TODO: separate note count in the message?
       AlertController.show(
           loc.changesUploadedTitle,
@@ -95,6 +95,6 @@ class UploaderProvider {
 
     await downloadPluginData(location);
     // updateAreaStatus();
-    _ref.read(needMapUpdateProvider).trigger();
+    _ref.read(needMapUpdateProvider.notifier).trigger();
   }
 }

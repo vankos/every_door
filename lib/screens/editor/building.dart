@@ -108,7 +108,7 @@ class _BuildingEditorPaneState extends ConsumerState<BuildingEditorPane> {
     final changes = ref.read(changesProvider.notifier);
     changes.saveChange(building);
     saved = true;
-    ref.read(needMapUpdateProvider).trigger();
+    ref.read(needMapUpdateProvider.notifier).trigger();
     if (pop) Navigator.pop(context);
   }
 
@@ -121,7 +121,7 @@ class _BuildingEditorPaneState extends ConsumerState<BuildingEditorPane> {
       changes.saveChange(building);
     }
     saved = true;
-    ref.read(needMapUpdateProvider).trigger();
+    ref.read(needMapUpdateProvider.notifier).trigger();
     Navigator.pop(context);
   }
 

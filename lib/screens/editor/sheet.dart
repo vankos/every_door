@@ -108,7 +108,7 @@ class _BottomEditorPaneState extends ConsumerState<BottomEditorPane> {
     final changes = ref.read(changesProvider.notifier);
     changes.saveChange(element);
     saved = true;
-    ref.read(needMapUpdateProvider).trigger();
+    ref.read(needMapUpdateProvider.notifier).trigger();
     if (pop) Navigator.pop(context);
   }
 
@@ -123,7 +123,7 @@ class _BottomEditorPaneState extends ConsumerState<BottomEditorPane> {
         changes.saveChange(element);
       }
       saved = true;
-      ref.read(needMapUpdateProvider).trigger();
+      ref.read(needMapUpdateProvider.notifier).trigger();
     }
     Navigator.pop(context);
   }

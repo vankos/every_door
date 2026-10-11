@@ -61,7 +61,14 @@ class ChangesProvider extends Notifier<int?> {
   }
 
   void _updateLength() {
-    state = length;
+    final newLength = length;
+    if (state == newLength) {
+      // The number of changes did not change, but their state might have
+      // (e.g. an upload error was added or cleared). Notify anyway.
+      ref.notifyListeners();
+    } else {
+      state = newLength;
+    }
   }
 
   OsmChange changeFor(OsmElement element, [bool storeNew = true]) {

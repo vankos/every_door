@@ -102,7 +102,7 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
     final changes = ref.read(changesProvider.notifier);
     changes.saveChange(entrance);
     saved = true;
-    ref.read(needMapUpdateProvider).trigger();
+    ref.read(needMapUpdateProvider.notifier).trigger();
     if (pop) Navigator.pop(context);
   }
 
@@ -121,7 +121,7 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
       changes.saveChange(entrance);
     }
     saved = true;
-    ref.read(needMapUpdateProvider).trigger();
+    ref.read(needMapUpdateProvider.notifier).trigger();
     Navigator.pop(context);
   }
 
@@ -401,7 +401,7 @@ class _EntranceEditorPaneState extends ConsumerState<EntranceEditorPane> {
                           MaterialLocalizations.of(context).cancelButtonLabel),
                       onPressed: () {
                         saved = true;
-                        ref.read(needMapUpdateProvider).trigger();
+                        ref.read(needMapUpdateProvider.notifier).trigger();
                         Navigator.pop(context);
                       },
                     ),

@@ -134,7 +134,7 @@ class _CachesPageState extends ConsumerState<CachesPage> {
                 AlertController.show(loc.settingsPurgedObsoleteTitle,
                     loc.settingsPurgedMessage(count), TypeAlert.success);
               }
-              ref.read(needMapUpdateProvider).trigger();
+              ref.read(needMapUpdateProvider.notifier).trigger();
             },
           ),
           ListTile(

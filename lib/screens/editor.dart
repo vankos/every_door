@@ -238,7 +238,7 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
         ref.read(osmDataProvider).updateFloorNumbering(amenity.location);
     }
     Navigator.pop(context);
-    ref.read(needMapUpdateProvider).trigger();
+    ref.read(needMapUpdateProvider.notifier).trigger();
   }
 
   void deleteAndClose() {
@@ -251,7 +251,7 @@ class _PoiEditorPageState extends ConsumerState<PoiEditorPage> {
         amenity.isDeleted = true;
         changes.saveChange(amenity);
       }
-      ref.read(needMapUpdateProvider).trigger();
+      ref.read(needMapUpdateProvider.notifier).trigger();
     }
     Navigator.pop(context);
   }
