@@ -14,7 +14,8 @@ mapping: take a photo of a place, and an AI model suggests OSM tags for it.
    the opening hours. Tap a photo to view it full screen; remove it with
    the cross in its corner.
 5. Optionally describe what to map on the photos (for example,
-   "this is a pharmacy").
+   "this is a pharmacy"). Right below the comment you can also switch the
+   recognition model without opening the settings.
 6. Tap "Recognize tags": all photos and the comment are sent to the
    [OpenRouter](https://openrouter.ai/) API, and the vision model replies
    with OSM tags. The tags are put into a new point and the usual editor
@@ -39,6 +40,8 @@ Open "Settings" → "Photo mapping" → "OpenRouter API":
   | DeepSeek Flash Latest | `~deepseek/deepseek-flash-latest` |
 
   Any other model id can be entered in the text field below the list.
+  The same model picker is available on the photo mapping screen itself,
+  below the comment field.
 
 Without an API key the camera button suggests opening the settings.
 
@@ -81,8 +84,10 @@ uploading to OpenStreetMap.
   (base64 image + text) and the JSON-to-tags parser.
 * `lib/screens/editor/photo_map.dart` — the system picker (`pickPhotos`:
   one photo from the camera, several from the gallery), the photo preview,
-  the comment field and the "Recognize tags" button. Returns a `Preset`
-  with the AI tags.
+  the comment field, the model picker and the "Recognize tags" button.
+  Returns a `Preset` with the AI tags.
+* `lib/widgets/ai_model_picker.dart` — the model dropdown and the custom
+  model id field, shared by the settings and photo mapping screens.
 * `lib/screens/editor/types.dart` — the camera button on the type chooser.
 * `lib/screens/settings/ai.dart` — the settings page.
 * `test/ai_tags_test.dart` — unit tests for the tags parser.

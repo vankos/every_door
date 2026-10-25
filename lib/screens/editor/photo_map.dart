@@ -5,6 +5,7 @@ import 'package:every_door/constants.dart';
 import 'package:every_door/helpers/tags/main_key.dart';
 import 'package:every_door/models/preset.dart';
 import 'package:every_door/providers/ai_tags.dart';
+import 'package:every_door/widgets/ai_model_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -215,7 +216,8 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
                       shape: BoxShape.circle,
                     ),
                     padding: const EdgeInsets.all(4.0),
-                    child: const Icon(Icons.close, size: 16.0, color: Colors.white),
+                    child: const Icon(Icons.close,
+                        size: 16.0, color: Colors.white),
                   ),
                 ),
               ),
@@ -275,46 +277,57 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: TextField(
-                controller: controller,
-                enabled: !loading,
-                maxLines: 3,
-                minLines: 1,
-                style: kFieldTextStyle,
-                decoration: InputDecoration(
-                  labelText: loc.photoMapDescriptionLabel,
-                  hintText: loc.photoMapDescriptionHint,
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.edit_note),
-                ),
-              ),
-            ),
-            if (error != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 8.0, 10.0, 0),
-                child: Text(
-                  error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: loading ? null : recognizeTags,
-                  icon: loading
-                      ? const SizedBox(
-                          width: 18.0,
-                          height: 18.0,
-                          child: CircularProgressIndicator(strokeWidth: 2.0),
-                        )
-                      : const Icon(Icons.auto_awesome),
-                  label: Text(
-                      loading ? loc.photoMapRecognizing : loc.photoMapSubmit),
-                ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: TextField(
+                      controller: controller,
+                      enabled: !loading,
+                      maxLines: 3,
+                      minLines: 1,
+                      style: kFieldTextStyle,
+                      decoration: InputDecoration(
+                        labelText: loc.photoMapDescriptionLabel,
+                        hintText: loc.photoMapDescriptionHint,
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.edit_note),
+                      ),
+                    ),
+                  ),
+                  AiModelPicker(enabled: !loading),
+                  if (error != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10.0, 8.0, 10.0, 0),
+                      child: Text(
+                        error!,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: loading ? null : recognizeTags,
+                        icon: loading
+                            ? const SizedBox(
+                                width: 18.0,
+                                height: 18.0,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2.0),
+                              )
+                            : const Icon(Icons.auto_awesome),
+                        label: Text(loading
+                            ? loc.photoMapRecognizing
+                            : loc.photoMapSubmit),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

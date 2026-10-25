@@ -3,6 +3,7 @@
 // Refer to LICENSE file and https://www.gnu.org/licenses/gpl-3.0.html for details.
 import 'package:every_door/constants.dart';
 import 'package:every_door/providers/ai_settings.dart';
+import 'package:every_door/widgets/ai_model_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:every_door/generated/l10n/app_localizations.dart'
@@ -17,28 +18,24 @@ class AiSettingsPage extends ConsumerStatefulWidget {
 
 class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
   late final TextEditingController _keyController;
-  late final TextEditingController _modelController;
   bool _obscureKey = true;
 
   @override
   void initState() {
     super.initState();
-    final settings = ref.read(aiSettingsProvider);
-    _keyController = TextEditingController(text: settings.apiKey);
-    _modelController = TextEditingController(text: settings.model);
+    _keyController =
+        TextEditingController(text: ref.read(aiSettingsProvider).apiKey);
   }
 
   @override
   void dispose() {
     _keyController.dispose();
-    _modelController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final model = ref.watch(aiSettingsProvider).model;
     // The API key is loaded from the secure storage asynchronously,
     // fill the field when it arrives.
     ref.listen(aiSettingsProvider, (previous, next) {
@@ -76,58 +73,7 @@ class _AiSettingsPageState extends ConsumerState<AiSettingsPage> {
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0),
-            child: DropdownButtonFormField<String>(
-              initialValue:
-                  kAiModels.any((option) => option.id == model) ? model : null,
-              isExpanded: true,
-              itemHeight: 64.0,
-              decoration: InputDecoration(
-                label: Text(loc.aiModelLabel),
-                prefixIcon: Icon(Icons.smart_toy),
-              ),
-              hint: Text(loc.aiModelChoose),
-              items: [
-                for (final option in kAiModels)
-                  DropdownMenuItem(
-                    value: option.id,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(option.name),
-                        Text(
-                          option.id,
-                          style: TextStyle(
-                              fontSize: 12.0, color: Colors.grey.shade600),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-              onChanged: (value) {
-                if (value == null) return;
-                _modelController.text = value;
-                ref.read(aiSettingsProvider.notifier).saveModel(value);
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0),
-            child: TextFormField(
-              controller: _modelController,
-              style: kFieldTextStyle,
-              decoration: InputDecoration(
-                label: Text(loc.aiModelCustomLabel),
-                hintText: loc.aiModelHint,
-                prefixIcon: Icon(Icons.edit),
-              ),
-              onChanged: (value) {
-                ref.read(aiSettingsProvider.notifier).saveModel(value);
-              },
-            ),
-          ),
+          const AiModelPicker(),
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: Text(
