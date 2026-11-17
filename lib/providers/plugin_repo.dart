@@ -6,7 +6,6 @@ import 'dart:io';
 
 import 'package:every_door/helpers/plugin_code.dart';
 import 'package:every_door/models/plugin.dart';
-import 'package:every_door/plugins/_construction.dart';
 import 'package:every_door/providers/plugin_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -62,7 +61,6 @@ class PluginRepository extends Notifier<List<Plugin>> {
     await ref.read(pluginManagerProvider.notifier).loadStateAndEnable();
 
     _installFromAssets();
-    _installConstruction();
   }
 
   Future<void> deletePlugin(String id) async {
@@ -101,28 +99,6 @@ class PluginRepository extends Notifier<List<Plugin>> {
         // it's fine if we leave it.
       }
     }
-  }
-
-  Future<void> _installConstruction() async {
-    if (!PluginUnderConstruction.kEnabled) return;
-    // So that the state is initialized.
-    await Future.delayed(Duration(milliseconds: 500));
-
-    final data = PluginUnderConstruction.getMetadata();
-    final pluginDir = _getPluginDirectory(data['id']);
-    final plugin = Plugin(
-      id: data['id'],
-      data: data,
-      directory: pluginDir,
-      instanceBuilder: (_) async => PluginUnderConstruction(),
-    );
-
-    await deletePlugin(data['id']);
-    state = state.followedBy([plugin]).toList();
-
-    await ref
-        .read(pluginManagerProvider.notifier)
-        .setStateAndSave(plugin, true);
   }
 
   Directory _getPluginDirectory(String id) {
