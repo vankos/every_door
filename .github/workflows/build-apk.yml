@@ -12,7 +12,7 @@ on:
         default: prod
   push:
     tags:
-      - 'v*'
+      - 'v20*'
 
 permissions:
   contents: write
@@ -51,11 +51,30 @@ jobs:
         echo "keyPassword=$KEYSTORE_PASSWORD" >> android/key.properties
         echo "keyAlias=everydoor" >> android/key.properties
         echo "storeFile=$RUNNER_TEMP/everydoor.jks" >> android/key.properties
+    - name: Extract version
+      run: |
+        if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+          # Tags are date-based: v2026.11.17
+          VERSION="${GITHUB_REF_NAME#v}"
+          BUILD_NUMBER="$(echo "$VERSION" | tr -cd '0-9')"
+        else
+          VERSION="$(sed -n 's/^version: *\([0-9][^+]*\).*/\1/p' pubspec.yaml | head -n 1)"
+          BUILD_NUMBER="$(sed -n 's/^version: *[^+]*+\([0-9]*\).*/\1/p' pubspec.yaml | head -n 1)"
+        fi
+        if [ -z "$VERSION" ] || [ -z "$BUILD_NUMBER" ]; then
+          echo "Could not determine the version" >&2
+          exit 1
+        fi
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+        echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+        echo "Building version $VERSION ($BUILD_NUMBER)"
     - name: Build APK
-      run: vendor/flutter/bin/flutter build apk --release --flavor $FLAVOR
+      run: |
+        vendor/flutter/bin/flutter build apk --release --flavor $FLAVOR \
+          --build-name="$VERSION" --build-number="$BUILD_NUMBER"
     - name: Rename APK
       run: |
-        NAME="EveryDoor-$FLAVOR-$(git log -n 1 --format='%h')"
+        NAME="EveryDoor-$FLAVOR-$VERSION-$(git log -n 1 --format='%h')"
         mv "build/app/outputs/flutter-apk/app-$FLAVOR-release.apk" "build/app/outputs/flutter-apk/$NAME.apk"
         echo "APK_NAME=$NAME.apk" >> "$GITHUB_ENV"
     - name: Archive APK
@@ -69,7 +88,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        TITLE="Every Door: Vibe mapping ${GITHUB_REF_NAME#vibe-}"
+        TITLE="Every Door: Vibe mapping $VERSION"
         if [ -f RELEASE_NOTES.md ]; then
           NOTES="--notes-file RELEASE_NOTES.md"
         else

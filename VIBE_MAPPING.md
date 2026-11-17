@@ -45,18 +45,37 @@ Open "Settings" → "Photo mapping" → "OpenRouter API":
 
 Without an API key the camera button suggests opening the settings.
 
+## Versioning
+
+Versions are date-based, like in the other projects: `YYYY.MM.DD`, and the
+git tag repeats it with a `v` prefix — `v2026.11.17`. There is no bump
+script, so a release means updating three places before tagging:
+
+* `pubspec.yaml` — `version: YYYY.MM.DD+YYYYMMDD` (the part after `+` is
+  the Android `versionCode`; the build adds the ABI digit to it, so it must
+  stay below 210000000).
+* `lib/constants.dart` — `kAppVersion`, shown in "About", used for
+  `User-Agent`, OSM changeset tags, and as the `presets.db` cache key.
+* The git tag itself, e.g. `git tag v2026.11.17 && git push origin v2026.11.17`.
+
+The tag is the source of truth for the build: the workflow takes the version
+from its name (`--build-name`), so a mismatched `pubspec.yaml` only affects
+local builds, not the published APK.
+
 ## Releases
 
 APKs are built on GitHub Actions (`.github/workflows/build-apk.yml`):
 
 * **Manually**: Actions → "Build Android APK" → Run workflow,
   choose the flavor (`prod` by default). The APK is attached to the run
-  as an artifact (kept for 60 days).
-* **By tag**: push a tag like `vibe-1.0` — the workflow builds the APK and
-  publishes a GitHub release with the APK attached. The release title is
-  "Every Door: Vibe mapping <tag without the vibe- prefix>". If a
-  `RELEASE_NOTES.md` file exists in the repository root, it is used as the
-  release description; otherwise GitHub generates the notes.
+  as an artifact (kept for 60 days). The version is taken from
+  `pubspec.yaml`.
+* **By tag**: push a tag like `v2026.11.17` — the workflow builds the APK
+  and publishes a GitHub release with the APK attached, named
+  `EveryDoor-<flavor>-<version>-<commit>.apk`. The release title is
+  "Every Door: Vibe mapping <version>". If a `RELEASE_NOTES.md` file exists
+  in the repository root, it is used as the release description; otherwise
+  GitHub generates the notes.
 
 The APK is signed with a personal key (keystore secrets
 `KEYSTORE_JKS` and `KEYSTORE_PASSWORD` in the repository). The same key
