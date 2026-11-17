@@ -72,7 +72,7 @@ class NotesProvider extends Notifier<int> {
   int build() {
     undoStack = UndoStack<BaseNote>(
       shouldSave: (note) => note is MapNote || note is MapDrawing,
-      doUpsert: (note) {
+      doUpsert: (note) async {
         if (note.isNew) {
           // restore with a new note id
           note.id = null;
@@ -80,10 +80,10 @@ class NotesProvider extends Notifier<int> {
           // just remove the flag
           note.isDeleted = false;
         }
-        saveNote(note, addUndo: false, notify: false);
+        await saveNote(note, addUndo: false, notify: false);
       },
-      doDelete: (note) {
-        deleteNote(note, addUndo: false, notify: false);
+      doDelete: (note) async {
+        await deleteNote(note, addUndo: false, notify: false);
       },
     );
 
@@ -639,8 +639,8 @@ class UndoStack<T> {
   final List<(bool deleted, List<T> notes)> _undoStack = [];
   int _undoStackLast = 0;
 
-  final Function(T note) doUpsert;
-  final Function(T note) doDelete;
+  final Future<void> Function(T note) doUpsert;
+  final Future<void> Function(T note) doDelete;
   final bool Function(T note)? shouldSave;
 
   UndoStack({required this.doUpsert, required this.doDelete, this.shouldSave});
@@ -665,9 +665,9 @@ class UndoStack<T> {
 
   Future<void> _restoreOneChange(T note, bool deleted) async {
     if (deleted) {
-      doUpsert(note);
+      await doUpsert(note);
     } else {
-      doDelete(note);
+      await doDelete(note);
     }
   }
 

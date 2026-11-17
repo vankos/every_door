@@ -78,7 +78,10 @@ class _NotesPaneState extends ConsumerState<NotesPane> {
   }
 
   void updateNotes() async {
-    final bounds = ref.read(visibleBoundsProvider);
+    // The bounds provider is empty until the map is moved for the first
+    // time, so fall back to the current camera bounds.
+    final bounds = ref.read(visibleBoundsProvider) ??
+        _controller.mapController?.camera.visibleBounds;
     if (bounds == null) return;
     await widget.def.updateNearest(bounds);
   }
@@ -246,8 +249,20 @@ class _NotesPaneState extends ConsumerState<NotesPane> {
                       final line = LineString(coords);
                       final crossing = widget.def.nearest
                           .whereType<MapDrawing>()
-                          .where((note) => line.intersects(note.path));
-                      ref.read(notesProvider.notifier).deleteDrawings(crossing);
+                          .where((note) => line.intersects(note.path))
+                          .toList();
+                      if (crossing.isNotEmpty) {
+                        // Remove drawings from the map right away, since
+                        // a database refresh is asynchronous and might
+                        // not happen until the map is moved.
+                        setState(() {
+                          widget.def.nearest
+                              .removeWhere((note) => crossing.contains(note));
+                        });
+                        ref
+                            .read(notesProvider.notifier)
+                            .deleteDrawings(crossing);
+                      }
                     } else {
                       final note = MapDrawing(
                         path: LineString(coords),
@@ -283,6 +298,9 @@ class _NotesPaneState extends ConsumerState<NotesPane> {
                       } else if (note is MapNote &&
                           currentTool == kToolEraser) {
                         // Tapping on a note in eraser mode deletes it.
+                        setState(() {
+                          widget.def.nearest.remove(note);
+                        });
                         ref.read(notesProvider.notifier).deleteNote(note);
                         found = true;
                         break;
@@ -303,8 +321,12 @@ class _NotesPaneState extends ConsumerState<NotesPane> {
                           }
                         }
                       }
-                      if (closest != null) {
-                        ref.read(notesProvider.notifier).deleteNote(closest);
+                      final drawing = closest;
+                      if (drawing != null) {
+                        setState(() {
+                          widget.def.nearest.remove(drawing);
+                        });
+                        ref.read(notesProvider.notifier).deleteNote(drawing);
                       }
                     }
                   },
@@ -332,8 +354,12 @@ class _NotesPaneState extends ConsumerState<NotesPane> {
                   UndoButton(
                     alignment:
                         leftHand ? Alignment.bottomRight : Alignment.bottomLeft,
-                    onTap: () {
-                      ref.read(notesProvider.notifier).undoStack.undoChange();
+                    onTap: () async {
+                      await ref
+                          .read(notesProvider.notifier)
+                          .undoStack
+                          .undoChange();
+                      if (mounted) updateNotes();
                     },
                   ),
               ],
