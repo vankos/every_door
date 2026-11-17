@@ -5,6 +5,8 @@ import 'package:eval_annotation/eval_annotation.dart';
 import 'package:every_door/helpers/multi_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:every_door/generated/l10n/app_localizations.dart'
+    show AppLocalizations;
 
 @Bind()
 class DrawingStyle {
@@ -52,6 +54,41 @@ DrawingStyle styleByName(String? name) {
     // TODO: drawing style from plugins.
   }
   return kUnknownStyle;
+}
+
+/// Returns a localized name for a drawing style, for example for the
+/// tool chooser or a list of drawings. Falls back to the internal name.
+String localizedStyleName(DrawingStyle style, AppLocalizations loc) {
+  switch (style.name) {
+    case "scribble":
+      return loc.drawScribble;
+    case "eraser":
+      return loc.drawEraser;
+    case "road":
+      return loc.drawRoad;
+    case "track":
+      return loc.drawTrack;
+    case "footway":
+      return loc.drawFootway;
+    case "path":
+      return loc.drawPath;
+    case "cycleway":
+      return loc.drawCycleway;
+    case "cycleway_shared":
+      return loc.drawCyclewayShared;
+    case "wall":
+      return loc.drawWall;
+    case "fence":
+      return loc.drawFence;
+    case "power":
+      return loc.drawPower;
+    case "stream":
+      return loc.drawStream;
+    case "culvert":
+      return loc.drawCulvert;
+    default:
+      return style.name;
+  }
 }
 
 final kToolEraser = DrawingStyle("eraser",

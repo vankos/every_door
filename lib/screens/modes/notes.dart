@@ -13,6 +13,7 @@ import 'package:every_door/providers/note_state.dart';
 import 'package:every_door/providers/notes.dart';
 import 'package:every_door/screens/editor/map_chooser.dart';
 import 'package:every_door/screens/modes/definitions/notes.dart';
+import 'package:every_door/screens/modes/scribble_list.dart';
 import 'package:every_door/widgets/area_status.dart';
 import 'package:every_door/widgets/map.dart';
 import 'package:every_door/widgets/map_drag_create.dart';
@@ -84,6 +85,30 @@ class _NotesPaneState extends ConsumerState<NotesPane> {
         _controller.mapController?.camera.visibleBounds;
     if (bounds == null) return;
     await widget.def.updateNearest(bounds);
+  }
+
+  /// Opens a list of the user's scribbles, grouped by day.
+  void showScribbleList() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      enableDrag: false,
+      builder: (context) => ScribbleListSheet(
+        onDeleted: (drawings) {
+          // Remove drawings from the map right away, since a database
+          // refresh is asynchronous and might not happen until the map
+          // is moved.
+          final deleted = drawings.map((drawing) => drawing.id).toSet();
+          if (mounted) {
+            setState(() {
+              widget.def.nearest.removeWhere(
+                  (note) => note is MapDrawing && deleted.contains(note.id));
+            });
+          }
+          updateNotes();
+        },
+      ),
+    );
   }
 
   List<Located> findClosestNotes(
@@ -363,6 +388,20 @@ class _NotesPaneState extends ConsumerState<NotesPane> {
                     },
                   ),
               ],
+              OverlayButtonWidget(
+                alignment:
+                    leftHand ? Alignment.bottomRight : Alignment.bottomLeft,
+                safeBottom: true,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 90.0,
+                ),
+                tooltip: loc.notesScribblesTitle,
+                onPressed: (_) {
+                  showScribbleList();
+                },
+                icon: MultiIcon(fontIcon: Icons.history),
+              ),
               MapDragCreateButton(
                 map: _controller,
                 icon: MultiIcon(

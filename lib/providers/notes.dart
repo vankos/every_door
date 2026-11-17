@@ -168,6 +168,25 @@ class NotesProvider extends Notifier<int> {
     return Counter(notes).mostOccurentItems(count: count, cutoff: 2).toList();
   }
 
+  /// Returns all scribbles (drawings) made by the current user,
+  /// the newest first. Drawings made on this device have no author,
+  /// so they are always considered the user's own.
+  Future<List<MapDrawing>> fetchMyDrawings() async {
+    final database = await ref.read(databaseProvider).database;
+    final author = ref.read(authProvider.notifier).osmUser?.displayName;
+    final data = await database.query(
+      BaseNote.kTableName,
+      where: 'type = ? and (author is null or author = ?)',
+      whereArgs: [MapDrawing.dbType, author ?? ''],
+      orderBy: 'created desc',
+    );
+    return data
+        .where((row) => row['created'] != null)
+        .map((row) => MapDrawing.fromJson(row))
+        .where((drawing) => !drawing.isDeleted)
+        .toList();
+  }
+
   /// Downloads OSM notes and drawings from servers.
   Future<void> downloadNotes(LatLng center) async {
     await downloadNotesInBounds(boundsFromRadius(center, kBigRadius));
@@ -271,6 +290,13 @@ class NotesProvider extends Notifier<int> {
     });
   }
 
+  /// Parses a creation date from the scribbles server response.
+  /// The server sends ISO-8601 strings with a time zone.
+  DateTime? _parseCreated(dynamic value) {
+    if (value is! String) return null;
+    return DateTime.tryParse(value)?.toLocal();
+  }
+
   Future<List<BaseNote>> _downloadMapNotes(LatLngBounds bounds) async {
     final ownNotesOnly = ref.read(ownScribblesProvider);
     final author = ref.read(authProvider.notifier).osmUser;
@@ -294,6 +320,7 @@ class NotesProvider extends Notifier<int> {
           author: noteData['username'],
           path: LineString(points.map((ll) => LatLng(ll[1], ll[0]))),
           style: styleByName(noteData['style']),
+          created: _parseCreated(noteData['created']),
         ));
       } else if (noteData.containsKey('location')) {
         final pt = noteData['location'] as List<dynamic>;
@@ -301,6 +328,7 @@ class NotesProvider extends Notifier<int> {
           id: noteData['id'],
           location: LatLng(pt[1], pt[0]),
           message: noteData['text'],
+          created: _parseCreated(noteData['created']),
         ));
       }
     }

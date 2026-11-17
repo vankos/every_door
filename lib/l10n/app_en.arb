@@ -1296,6 +1296,44 @@
   "@notesCancelMessage": {
     "description": "Message when cancelling an OSM note that has non-empty content."
   },
+  "notesScribblesTitle": "My scribbles",
+  "@notesScribblesTitle": {
+    "description": "Title of the list of own drawings, and a tooltip for the button that opens it."
+  },
+  "notesScribblesEmpty": "You have not drawn anything yet.",
+  "@notesScribblesEmpty": {
+    "description": "Placeholder for an empty list of own drawings."
+  },
+  "notesScribblesCount": "{count, plural, =1{1 scribble} other{{count} scribbles}}",
+  "@notesScribblesCount": {
+    "description": "Number of own drawings made on a single day.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notesScribblesToday": "Today",
+  "@notesScribblesToday": {
+    "description": "Day group title for drawings made today."
+  },
+  "notesScribblesYesterday": "Yesterday",
+  "@notesScribblesYesterday": {
+    "description": "Day group title for drawings made yesterday."
+  },
+  "notesScribblesDeleteDay": "Delete scribbles?",
+  "@notesScribblesDeleteDay": {
+    "description": "Title of the dialog that deletes all drawings made on a single day."
+  },
+  "notesScribblesDeleteDayMessage": "All scribbles drawn on {date} will be deleted.",
+  "@notesScribblesDeleteDayMessage": {
+    "description": "Confirmation message for deleting all drawings of a single day.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "drawUndo": "Undo",
   "@drawUndoMessage": {
     "description": "Tooltip for the undo button."

@@ -901,6 +901,34 @@
   "@notesDelete": {
     "description": "Button title for deleting a new note."
   },
+  "notesScribblesTitle": "Мои скриблы",
+  "@notesScribblesTitle": {
+    "description": "Title of the list of own drawings, and a tooltip for the button that opens it."
+  },
+  "notesScribblesEmpty": "Вы пока ничего не нарисовали.",
+  "@notesScribblesEmpty": {
+    "description": "Placeholder for an empty list of own drawings."
+  },
+  "notesScribblesCount": "{count, plural, one{{count} скрибл} few{{count} скрибла} many{{count} скриблов} other{{count} скрибла}}",
+  "@notesScribblesCount": {
+    "description": "Number of own drawings made on a single day."
+  },
+  "notesScribblesToday": "Сегодня",
+  "@notesScribblesToday": {
+    "description": "Day group title for drawings made today."
+  },
+  "notesScribblesYesterday": "Вчера",
+  "@notesScribblesYesterday": {
+    "description": "Day group title for drawings made yesterday."
+  },
+  "notesScribblesDeleteDay": "Удалить скриблы?",
+  "@notesScribblesDeleteDay": {
+    "description": "Title of the dialog that deletes all drawings made on a single day."
+  },
+  "notesScribblesDeleteDayMessage": "Все скриблы, нарисованные {date}, будут удалены.",
+  "@notesScribblesDeleteDayMessage": {
+    "description": "Confirmation message for deleting all drawings of a single day."
+  },
   "drawCulvert": "Труба",
   "@drawCulvert": {
     "description": "Tool description: underground water pipe, culvert. Keep it short."

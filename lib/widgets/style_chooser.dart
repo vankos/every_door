@@ -223,36 +223,7 @@ class StylePill extends StatelessWidget {
   const StylePill({super.key, required this.style, this.focused = false});
 
   String getLocalizedStyle(AppLocalizations loc) {
-    switch (style.name) {
-      case "scribble":
-        return loc.drawScribble;
-      case "eraser":
-        return loc.drawEraser;
-      case "road":
-        return loc.drawRoad;
-      case "track":
-        return loc.drawTrack;
-      case "footway":
-        return loc.drawFootway;
-      case "path":
-        return loc.drawPath;
-      case "cycleway":
-        return loc.drawCycleway;
-      case "cycleway_shared":
-        return loc.drawCyclewayShared;
-      case "wall":
-        return loc.drawWall;
-      case "fence":
-        return loc.drawFence;
-      case "power":
-        return loc.drawPower;
-      case "stream":
-        return loc.drawStream;
-      case "culvert":
-        return loc.drawCulvert;
-      default:
-        return style.name;
-    }
+    return localizedStyleName(style, loc);
   }
 
   @override

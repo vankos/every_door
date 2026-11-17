@@ -13,6 +13,7 @@ _Unreleased_
 * A new simpler style for defining element kinds for plugins.
 * Shorter tiles in the plugin list.
 * Updated the local country language list (thanks @alnzrv).
+* A list of your scribbles grouped by day, with a button to delete a day's scribbles.
 
 ## 7.1
 
