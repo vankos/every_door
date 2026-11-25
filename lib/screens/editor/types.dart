@@ -222,7 +222,10 @@ class _TypeChooserPageState extends ConsumerState<TypeChooserPage> {
     final preset = await Navigator.push<Preset>(
       context,
       MaterialPageRoute(
-        builder: (context) => PhotoMapPage(photos: photos),
+        builder: (context) => PhotoMapPage(
+          photos: photos,
+          location: widget.location,
+        ),
       ),
     );
     if (preset == null || !mounted) return;

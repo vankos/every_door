@@ -1,7 +1,8 @@
 # Vibe mapping: adding points from photos
 
 This fork of [Every Door](https://github.com/Zverik/every_door) adds photo
-mapping: take a photo of a place, and an AI model suggests OSM tags for it.
+mapping: take a photo of a place, and an AI model suggests OSM tags for it,
+then fills the fields of the detected preset.
 
 ## How it works
 
@@ -17,9 +18,14 @@ mapping: take a photo of a place, and an AI model suggests OSM tags for it.
    "this is a pharmacy"). Right below the comment you can also switch the
    recognition model without opening the settings.
 6. Tap "Recognize tags": all photos and the comment are sent to the
-   [OpenRouter](https://openrouter.ai/) API, and the vision model replies
-   with OSM tags. The tags are put into a new point and the usual editor
-   opens, with the field list detected from those tags.
+   [OpenRouter](https://openrouter.ai/) API. Recognition goes in two
+   passes: first the model suggests the object type and main OSM tags,
+   then the app detects the preset (the template) for that type and sends
+   its field list to the model, so the model fills in the fields the user
+   would normally see in the editor. While the model is working, a status
+   bar shows the current step: "Determining the type…" and then
+   "Filling in the fields…". The tags are put into a new point and the
+   usual editor opens, with the field list detected from those tags.
 7. Check and fix the tags as usual, then save the point.
 
 ## Configuration
@@ -92,7 +98,8 @@ installs alongside it.
 
 ## Privacy
 
-Photos and the comment are sent to OpenRouter and the model provider.
+Photos and the comment are sent to OpenRouter and the model provider
+(twice: first to detect the object type, then to fill the preset fields).
 Suggested tags may be wrong: they are only a draft, review them before
 uploading to OpenStreetMap.
 
@@ -100,16 +107,30 @@ uploading to OpenStreetMap.
 
 * `lib/providers/ai_settings.dart` — OpenRouter settings (key + model list).
 * `lib/providers/ai_tags.dart` — the OpenRouter chat completions client
-  (base64 image + text) and the JSON-to-tags parser.
+  (base64 image + text), the JSON-to-tags parser, and the two prompts:
+  `kSystemPrompt` for the object type and `kFillFieldsPrompt` for the
+  preset fields.
+* `lib/helpers/ai_fields.dart` — converts editor fields to the compact
+  field descriptions sent to the model. Single-tag fields are sent as one
+  key; the payment field and multi-value fields (diet, currency, ...) are
+  sent as a `keys` list, where each key is filled with `yes` or `no`.
+  Address fields (which need a set of `addr:*` tags), `manyCombo` fields
+  and sections are skipped. Choice fields carry their option lists, capped
+  to keep the prompt small and marked as "closed" when custom values are
+  not allowed.
 * `lib/screens/editor/photo_map.dart` — the system picker (`pickPhotos`:
   one photo from the camera, several from the gallery), the photo preview,
-  the comment field, the model picker and the "Recognize tags" button.
+  the comment field, the model picker, the "Recognize tags" button, and the
+  status bar with the current step. After the first response it detects the
+  preset with `PresetProvider.getPresetForTags`, builds the editor field
+  list with `StandardEditorFieldsBuilder`, and asks the model to fill it.
   Returns a `Preset` with the AI tags.
 * `lib/widgets/ai_model_picker.dart` — the model dropdown and the custom
   model id field, shared by the settings and photo mapping screens.
 * `lib/screens/editor/types.dart` — the camera button on the type chooser.
 * `lib/screens/settings/ai.dart` — the settings page.
 * `test/ai_tags_test.dart` — unit tests for the tags parser.
+* `test/ai_fields_test.dart` — unit tests for the field descriptions.
 
 The returned tags are passed to the editor as a preset of type
 `PresetType.nsi`, so the editor detects the actual preset by the tags and

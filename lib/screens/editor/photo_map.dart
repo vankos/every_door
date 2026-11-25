@@ -2,15 +2,25 @@
 // This file is a part of Every Door, distributed under GPL v3 or later version.
 // Refer to LICENSE file and https://www.gnu.org/licenses/gpl-3.0.html for details.
 import 'package:every_door/constants.dart';
+import 'package:every_door/helpers/ai_fields.dart';
+import 'package:every_door/helpers/editor_builder.dart';
 import 'package:every_door/helpers/tags/main_key.dart';
+import 'package:every_door/models/amenity.dart';
 import 'package:every_door/models/preset.dart';
 import 'package:every_door/providers/ai_tags.dart';
+import 'package:every_door/providers/presets.dart';
 import 'package:every_door/widgets/ai_model_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:logging/logging.dart';
 import 'package:every_door/generated/l10n/app_localizations.dart'
     show AppLocalizations;
+
+/// A step of the two-phase photo mapping: the model first detects the object
+/// type, then fills in the fields of the detected preset.
+enum _AiPhase { detectingType, fillingFields }
 
 /// Asks where to take photos from and picks one or more of them.
 /// Returns an empty list when the user cancelled or the photos could not
@@ -90,8 +100,13 @@ String imageMimeType(XFile file) {
 class PhotoMapPage extends ConsumerStatefulWidget {
   final List<AiPhoto> photos;
 
+  /// The location of the new object, used to filter location-specific
+  /// fields of the detected preset.
+  final LatLng? location;
+
   const PhotoMapPage({
     required this.photos,
+    this.location,
   });
 
   @override
@@ -99,9 +114,11 @@ class PhotoMapPage extends ConsumerStatefulWidget {
 }
 
 class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
+  static final _logger = Logger('PhotoMap');
   late final List<AiPhoto> photos = List.of(widget.photos);
   final controller = TextEditingController();
   bool loading = false;
+  _AiPhase phase = _AiPhase.detectingType;
   String? error;
 
   @override
@@ -139,20 +156,26 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
     final loc = AppLocalizations.of(context)!;
     setState(() {
       loading = true;
+      phase = _AiPhase.detectingType;
       error = null;
     });
 
     try {
-      final tags = await ref.read(aiTagsProvider).recognizeTags(
-            photos: photos,
-            explanation: controller.text,
-          );
+      final ai = ref.read(aiTagsProvider);
+      final tags = await ai.recognizeTags(
+        photos: photos,
+        explanation: controller.text,
+      );
+      if (!mounted) return;
+      // Now that the object type is known, ask the model to fill the fields
+      // of the preset detected for it.
+      final filled = await _fillFields(tags, loc);
       // The preset type is NSI so that the editor detects the actual preset
       // (and its field list) by the returned tags, keeping all of them.
       final preset = Preset(
         id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
         name: _presetName(tags),
-        addTags: tags,
+        addTags: {...tags, ...filled},
         type: PresetType.nsi,
       );
       if (mounted) Navigator.pop(context, preset);
@@ -170,6 +193,66 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
           error = loc.photoMapError(e.toString());
         });
       }
+    }
+  }
+
+  /// Detects the preset for the recognized tags, builds the list of fields
+  /// the editor would offer, and asks the AI model to fill them from the
+  /// photos. A failure is not fatal: the tags from the first phase are used.
+  Future<Map<String, String>> _fillFields(
+      Map<String, String> tags, AppLocalizations loc) async {
+    if (!mounted) return const {};
+    setState(() {
+      phase = _AiPhase.fillingFields;
+    });
+
+    try {
+      final locale = Localizations.localeOf(context);
+      final presets = ref.read(presetProvider);
+      Preset preset = await presets.getPresetForTags(
+        tags,
+        isArea: false,
+        locale: locale,
+      );
+      if (preset.type == PresetType.fixme) return const {};
+      if (preset.fields.isEmpty) {
+        preset = await presets.getFields(
+          preset,
+          locale: locale,
+          location: widget.location,
+        );
+      }
+      // The standard fields builder may add fields to the preset, so work
+      // with copies: the default preset's field lists are constant.
+      preset =
+          preset.withFields(List.of(preset.fields), List.of(preset.moreFields));
+
+      final amenity = OsmChange.create(
+        location: widget.location ?? const LatLng(0.0, 0.0),
+        tags: tags,
+        source: 'osm',
+      );
+      final groups = await StandardEditorFieldsBuilder(presets, locale, loc)
+          .sortFields(amenity, preset);
+      // Only the fields shown right away, without the "More fields" group.
+      final fields = [
+        for (final group in groups)
+          if (group.title == null) ...group.fields,
+      ];
+      final aiFields = buildAiFields(fields);
+      if (aiFields.isEmpty || !mounted) return const {};
+      _logger.fine(
+          'Filling ${aiFields.length} fields of preset ${preset.id} with AI');
+
+      return await ref.read(aiTagsProvider).fillFields(
+            photos: photos,
+            tags: tags,
+            fields: aiFields,
+            explanation: controller.text,
+          );
+    } on Exception catch (e) {
+      _logger.warning('Could not fill preset fields with AI', e);
+      return const {};
     }
   }
 
@@ -257,6 +340,25 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
     );
   }
 
+  Widget _buildStatus(AppLocalizations loc) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const LinearProgressIndicator(),
+          const SizedBox(height: 8.0),
+          Text(
+            phase == _AiPhase.detectingType
+                ? loc.photoMapStatusType
+                : loc.photoMapStatusFields,
+            style: TextStyle(color: Colors.grey.shade700),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -277,6 +379,7 @@ class _PhotoMapPageState extends ConsumerState<PhotoMapPage> {
                 ],
               ),
             ),
+            if (loading) _buildStatus(loc),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,

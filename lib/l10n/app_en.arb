@@ -1518,6 +1518,14 @@
   "@photoMapRecognizing": {
     "description": "Label shown while the AI model is recognizing tags."
   },
+  "photoMapStatusType": "Determining the type…",
+  "@photoMapStatusType": {
+    "description": "Status bar text while the AI model detects the object type."
+  },
+  "photoMapStatusFields": "Filling in the fields…",
+  "@photoMapStatusFields": {
+    "description": "Status bar text while the AI model fills the preset fields."
+  },
   "photoMapNoKey": "Set the OpenRouter API key and model in settings to map objects from photos.",
   "@photoMapNoKey": {
     "description": "Message shown when the photo mapping is not configured yet."
